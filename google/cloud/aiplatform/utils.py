@@ -59,10 +59,12 @@ AiPlatformServiceClient = TypeVar(
     job_service_client.JobServiceClient,
 )
 
-# TODO(b/170334193): Add support for resource names with non-integer IDs
 # TODO(b/170334098): Add support for resource names more than one level deep
 RESOURCE_NAME_PATTERN = re.compile(
     r"^projects\/(?P<project>[\w-]+)\/locations\/(?P<location>[\w-]+)\/(?P<resource>\w+)\/(?P<id>\d+)$"
+)
+RESOURCE_NAME_PATTERN_ALLOW_STR_ID = re.compile(
+    r"^projects\/(?P<project>[\w-]+)\/locations\/(?P<location>[\w-]+)\/(?P<resource>\w+)\/(?P<id>[\w-]+)$"
 )
 RESOURCE_ID_PATTERN = re.compile(r"^\d+$")
 
@@ -88,7 +90,9 @@ def validate_id(resource_id: str) -> bool:
 
 
 def extract_fields_from_resource_name(
-    resource_name: str, resource_noun: Optional[str] = None
+    resource_name: str,
+    resource_noun: Optional[str] = None,
+    allow_str_id: Optional[bool] = False,
 ) -> Optional[Fields]:
     """Validates and returns extracted fields from a fully-qualified resource name.
     Returns None if name is invalid.
@@ -102,13 +106,21 @@ def extract_fields_from_resource_name(
             For example, you would pass "datasets" to validate
             "projects/123/locations/us-central1/datasets/456".
 
+        allow_str_id (bool):
+            Whether resource ID can contain non-integer characters.
+
     Returns:
         fields (Fields):
             A named tuple containing four extracted fields from a resource name:
             project, location, resource, and id. These fields can be used for
             subsequent method calls in the SDK.
     """
-    fields = _match_to_fields(RESOURCE_NAME_PATTERN.match(resource_name))
+    if allow_str_id:
+        fields = _match_to_fields(
+            RESOURCE_NAME_PATTERN_ALLOW_STR_ID.match(resource_name)
+        )
+    else:
+        fields = _match_to_fields(RESOURCE_NAME_PATTERN.match(resource_name))
 
     if not fields:
         return None
@@ -123,6 +135,7 @@ def full_resource_name(
     resource_noun: str,
     project: Optional[str] = None,
     location: Optional[str] = None,
+    allow_str_id: Optional[bool] = False,
 ) -> str:
     """
     Returns fully qualified resource name.
@@ -141,6 +154,8 @@ def full_resource_name(
         location (str):
             Optional location to retrieve resource_noun from. If not set, location
             set in aiplatform.init will be used.
+        allow_str_id (bool):
+            Whether resource ID can contain non-integer characters.
 
     Returns:
         resource_name (str):
@@ -153,7 +168,9 @@ def full_resource_name(
     validate_resource_noun(resource_noun)
     # Fully qualified resource name, i.e. "projects/.../locations/.../datasets/12345"
     valid_name = extract_fields_from_resource_name(
-        resource_name=resource_name, resource_noun=resource_noun
+        resource_name=resource_name,
+        resource_noun=resource_noun,
+        allow_str_id=allow_str_id,
     )
 
     user_project = project or initializer.global_config.project

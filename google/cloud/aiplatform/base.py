@@ -297,12 +297,16 @@ class AiPlatformResourceNoun(metaclass=abc.ABCMeta):
             prediction_client=cls._is_client_prediction_client,
         )
 
-    def _get_gca_resource(self, resource_name: str) -> proto.Message:
+    def _get_gca_resource(
+        self, resource_name: str, allow_str_id: Optional[bool] = False,
+    ) -> proto.Message:
         """Returns GAPIC service representation of client class resource."""
         """
         Args:
             resource_name (str):
             Required. A fully-qualified resource name or ID.
+            allow_str_id (bool):
+            Optional. Whether resource ID can contain non-integer characters.
         """
 
         resource_name = utils.full_resource_name(
@@ -310,6 +314,7 @@ class AiPlatformResourceNoun(metaclass=abc.ABCMeta):
             resource_noun=self._resource_noun,
             project=self.project,
             location=self.location,
+            allow_str_id=allow_str_id,
         )
 
         return getattr(self.api_client, self._getter_method)(name=resource_name)
