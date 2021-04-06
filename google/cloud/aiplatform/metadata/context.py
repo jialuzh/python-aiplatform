@@ -180,7 +180,8 @@ class Context(base.AiPlatformResourceNounWithFutureManager):
         return api_client.create_context(
             parent=initializer.global_config.common_location_path(
                 project=project, location=location
-            ) + f"/metadataStores/{metadata_store_id}",
+            )
+            + f"/metadataStores/{metadata_store_id}",
             context=gapic_context,
             context_id=context_id,
             metadata=request_metadata,

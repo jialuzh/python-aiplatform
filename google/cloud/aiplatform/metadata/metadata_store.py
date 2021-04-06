@@ -165,7 +165,7 @@ class MetadataStore(base.AiPlatformResourceNounWithFutureManager):
                 metadata=request_metadata,
             ).result()
         except Exception as e:
-            logging.error(f'Create MetadataStore caused error: {str(e)}')
+            logging.error(f"Create MetadataStore caused error: {str(e)}")
             raise
 
         return cls(
