@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+import logging
 from typing import Optional, Sequence, Tuple, Dict
 
 import proto
+from google.api_core import exceptions
 from google.auth import credentials as auth_credentials
 
 from google.cloud.aiplatform import base, initializer
@@ -177,12 +179,28 @@ class Context(base.AiPlatformResourceNounWithFutureManager):
             metadata=metadata,
         )
 
-        return api_client.create_context(
-            parent=initializer.global_config.common_location_path(
-                project=project, location=location
+        try:
+            created_context = api_client.create_context(
+                parent=initializer.global_config.common_location_path(
+                    project=project, location=location
+                )
+                + f"/metadataStores/{metadata_store_id}",
+                context=gapic_context,
+                context_id=context_id,
+                metadata=request_metadata,
             )
-            + f"/metadataStores/{metadata_store_id}",
-            context=gapic_context,
-            context_id=context_id,
-            metadata=request_metadata,
+        except exceptions.AlreadyExists:
+            logging.info(f"Context '{context_id}' already exist")
+            return cls(
+                context_id=context_id,
+                project=project,
+                location=location,
+                credentials=credentials,
+            )
+
+        return cls(
+            context_resource_name=created_context.name,
+            project=project,
+            location=location,
+            credentials=credentials,
         )

@@ -16,14 +16,13 @@
 #
 import logging
 from typing import Optional, Sequence, Tuple
-from urllib.error import HTTPError
 
 import proto
 from google.auth import credentials as auth_credentials
+from google.api_core import exceptions
 
 from google.cloud.aiplatform import base, initializer
 from google.cloud.aiplatform.metadata.metadata_utils import full_resource_name
-from google.cloud.aiplatform_v1beta1.services.metadata_service.transports import grpc
 from google.cloud.aiplatform_v1beta1.types import metadata_store as gca_metadata_store
 from google.cloud.aiplatform_v1beta1.services.metadata_service import (
     client as metadata_service_client,
@@ -164,9 +163,14 @@ class MetadataStore(base.AiPlatformResourceNounWithFutureManager):
                 metadata_store_id=metadata_store_id,
                 metadata=request_metadata,
             ).result()
-        except Exception as e:
-            logging.error(f"Create MetadataStore caused error: {str(e)}")
-            raise
+        except exceptions.AlreadyExists:
+            logging.info(f"MetadataStore '{metadata_store_id}' already exist")
+            return cls(
+                metadata_store_id=metadata_store_id,
+                project=project,
+                location=location,
+                credentials=credentials,
+            )
 
         return cls(
             metadata_store_resource_name=created_metadata_store.name,

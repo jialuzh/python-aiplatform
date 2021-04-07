@@ -59,11 +59,8 @@ def full_resource_name(
     user_location = location or initializer.global_config.location
 
     # Partial resource name (i.e. "12345") with known project and location
-    if (
-        utils.validate_project(user_project)
-        and utils.validate_region(user_location)
-        and utils.validate_id(resource_id)
-    ):
+    # TODO: add resource ID check.
+    if utils.validate_project(user_project) and utils.validate_region(user_location):
         if metadata_store_id:
             resource_name = f"projects/{user_project}/locations/{user_location}/metadataStores/{metadata_store_id}/{resource_noun}/{resource_id}"
         else:
