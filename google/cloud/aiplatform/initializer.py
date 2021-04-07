@@ -29,6 +29,7 @@ from google.auth import credentials as auth_credentials
 from google.auth.exceptions import GoogleAuthError
 from google.cloud.aiplatform import utils
 from google.cloud.aiplatform import constants
+from google.cloud.aiplatform.metadata import metadata_config
 from google.cloud.aiplatform_v1beta1.types import encryption_spec as gca_encryption_spec
 
 
@@ -38,10 +39,12 @@ class _Config:
     def __init__(self):
         self._project = None
         self._experiment = None
+        self._run = None
         self._location = None
         self._staging_bucket = None
         self._credentials = None
         self._encryption_spec_key_name = None
+        self._metadata_config = None
 
     def init(
         self,
@@ -49,6 +52,7 @@ class _Config:
         project: Optional[str] = None,
         location: Optional[str] = None,
         experiment: Optional[str] = None,
+        run: Optional[str] = None,
         staging_bucket: Optional[str] = None,
         credentials: Optional[auth_credentials.Credentials] = None,
         encryption_spec_key_name: Optional[str] = None,
@@ -59,7 +63,8 @@ class _Config:
             project (str): The default project to use when making API calls.
             location (str): The default location to use when making API calls. If not
                 set defaults to us-central-1
-            experiment (str): The experiment to assign
+            experiment (str): The experiment to assign for metadata tracking
+            run (str): The run to assign under experiment for metadata tracking
             staging_bucket (str): The default staging bucket to use to stage artifacts
                 when making API calls. In the form gs://...
             credentials (google.auth.credentials.Credentials): The default custom
@@ -82,8 +87,14 @@ class _Config:
             utils.validate_region(location)
             self._location = location
         if experiment:
-            logging.warning("Experiments currently not supported.")
             self._experiment = experiment
+        if run:
+            self._run = run
+        if experiment or run:
+            self._metadata_config = metadata_config.MetadataConfig(
+                self._experiment, self._run
+            )
+            self._metadata_config.init()
         if staging_bucket:
             self._staging_bucket = staging_bucket
         if credentials:
